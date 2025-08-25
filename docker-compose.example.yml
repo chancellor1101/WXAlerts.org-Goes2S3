@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  goes_uploader:
+    build: .
+    container_name: goes-uploader
+    restart: unless-stopped
+    environment:
+      # --- What to watch ---
+      WATCH_ROOT: /data
+      IMAGE_EXTS: jpg,jpeg,png,gif,bmp,tif,tiff,pdf
+      QUIET_SECONDS: "5"
+      SCAN_INTERVAL: "2.0"
+      CONCURRENCY: "4"
+      DELETE_AFTER_UPLOAD: "true"
+
+      # --- MinIO / S3 ---
+      S3_ENDPOINT: http://10.10.0.14:9000
+      S3_ACCESS_KEY: your-minio-access-key
+      S3_SECRET_KEY: your-minio-secret-key
+      S3_BUCKET: goes-artifacts
+      S3_REGION: us-east-1
+      S3_VERIFY_SSL: "false"   # set true if using TLS with valid certs
+      S3_ADDRESSING_STYLE: path
+      S3_PREFIX: emwin   # optional; becomes the top-level folder in the bucket
+      EXTRA_METADATA: source=wx1,service=emwin
+
+      LOG_LEVEL: INFO
+    volumes:
+      - /srv/goes/output:/data:rw
+    # If your MinIO requires a special network, uncomment:
+    # networks:
+    #   - storage
+
+# networks:
+#   storage:
+#     external: true
