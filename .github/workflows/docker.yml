@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  IMAGE_NAME: wxalerts-emwin-uploader
+  IMAGE_NAME: wxalerts-goes2S3
 
 jobs:
   docker:
