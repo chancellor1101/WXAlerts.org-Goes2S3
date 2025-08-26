@@ -8,15 +8,17 @@ on:
 
 env:
   IMAGE_NAME: wxalerts-emwin-uploader
-  # Use secrets via env so we don't inline expressions in fields
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
   docker:
     runs-on: ubuntu-latest
+    # Job-level permissions are fine, but also ensure the repo’s
+    # Settings ➜ Actions ➜ Workflow permissions are set to
+    # “Read and write permissions”.
     permissions:
       contents: read
-      packages: write  # needed for GHCR
+      packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,26 +29,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Force a lowercase owner for GHCR
+      - name: Compute lowercase owner
+        id: ow
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          # IMPORTANT: Use repository_owner with GITHUB_TOKEN
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
             type=sha
 
-      - name: Build & Push (GHCR + Docker Hub)
+      - name: Build & Push
         uses: docker/build-push-action@v6
         with:
           context: .
